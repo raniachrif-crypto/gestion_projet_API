@@ -3,10 +3,9 @@ require('dotenv').config();
 
 const express = require('express');
 const connectDB = require('./config/db');
+
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
-const authMiddleware = require('./middlewares/authMiddleware');
-const roleMiddleware = require('./middlewares/roleMiddleware');
 
 const app = express();
 
@@ -16,31 +15,13 @@ app.use(express.json());
 // Routes d'authentification
 app.use('/api/auth', authRoutes);
 
+// Routes des projets
+app.use('/api/projects', projectRoutes);
+
 // Route de test
 app.get('/', (req, res) => {
     res.send('API Gestion de Projets fonctionne !');
 });
-
-
-
-
-// Route accessible aux utilisateurs connectés
-app.get('/api/test-protected', authMiddleware, (req, res) => {
-    res.json({
-        message: 'Accès autorisé !',
-        utilisateur: req.user
-    });
-});
-
-// Route accessible uniquement au manager
-app.get('/api/test-manager', authMiddleware, roleMiddleware('manager'), (req, res) => {
-    res.json({
-        message: 'Bienvenue Manager !'
-    });
-});
-
-
-
 
 // Connexion à MongoDB
 connectDB();

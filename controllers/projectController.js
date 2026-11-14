@@ -1,19 +1,18 @@
 
-const Project = require('../models/Project');
+const mongoose = require('mongoose');
+const Project = require('../models/project');
 
-// Création d'un projet
-exports.createProject = async (req, res) => {
+// 1. Créer un projet
+const createProject = async (req, res) => {
     try {
         const { nom, description, statut } = req.body;
 
-        // نتثبتو اللي اسم المشروع موجود
-        if (!nom) {
+        if (!nom || !nom.trim()) {
             return res.status(400).json({
                 message: 'Le nom du projet est obligatoire'
             });
         }
 
-        // نصنعو projet جديد ونربطوه بالمستخدم المتصل
         const project = await Project.create({
             nom,
             description,
@@ -27,45 +26,68 @@ exports.createProject = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: 'Erreur lors de la création du projet',
+            error: error.message
+        });
     }
 };
 
 
-// Afficher les projets de l'utilisateur connecté
-exports.getMyProjects = async (req, res) => {
+// 2. Afficher mes projets
+const getMyProjects = async (req, res) => {
     try {
         const projects = await Project.find({
             owner: req.user.id
         });
 
-        res.status(200).json(projects);
+        res.status(200).json({
+            message: 'Mes projets',
+            projects
+        });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: 'Erreur lors de la récupération des projets',
+            error: error.message
+        });
     }
 };
 
 
-// Afficher tous les projets (Manager uniquement)
-exports.getAllProjects = async (req, res) => {
+// 3. Afficher tous les projets (Manager)
+const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find()
             .populate('owner', 'nom login');
 
-        res.status(200).json(projects);
+        res.status(200).json({
+            message: 'Liste de tous les projets',
+            projects
+        });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: 'Erreur lors de la récupération des projets',
+            error: error.message
+        });
     }
 };
 
 
-// Afficher un projet par son ID
-exports.getProjectById = async (req, res) => {
+// 4. Afficher un projet par ID
+const getProjectById = async (req, res) => {
     try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: 'ID du projet invalide'
+            });
+        }
+
         const project = await Project.findOne({
-            _id: req.params.id,
+            _id: id,
             owner: req.user.id
         });
 
@@ -75,33 +97,54 @@ exports.getProjectById = async (req, res) => {
             });
         }
 
-        res.status(200).json(project);
+        res.status(200).json({ project });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: 'Erreur lors de la récupération du projet',
+            error: error.message
+        });
     }
 };
 
 
-// Modifier un projet
-exports.updateProject = async (req, res) => {
+// 5. Modifier un projet
+const updateProject = async (req, res) => {
     try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: 'ID du projet invalide'
+            });
+        }
+
         const { nom, description, statut } = req.body;
 
-        const project = await Project.findOneAndUpdate(
-            {
-                _id: req.params.id,
-                owner: req.user.id
-            },
-            { nom, description, statut },
-            { new: true, runValidators: true }
-        );
+        const project = await Project.findOne({
+            _id: id,
+            owner: req.user.id
+        });
 
         if (!project) {
             return res.status(404).json({
                 message: 'Projet introuvable'
             });
         }
+
+        if (nom !== undefined) {
+    if (typeof nom !== 'string' || !nom.trim()) {
+        return res.status(400).json({
+            message: 'Le nom du projet ne peut pas être vide'
+        });
+    }
+
+    project.nom = nom.trim();
+}
+        if (description !== undefined) project.description = description;
+        if (statut !== undefined) project.statut = statut;
+
+        await project.save();
 
         res.status(200).json({
             message: 'Projet modifié avec succès',
@@ -109,16 +152,27 @@ exports.updateProject = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({
+            message: 'Erreur lors de la modification du projet',
+            error: error.message
+        });
     }
 };
 
 
-// Supprimer un projet
-exports.deleteProject = async (req, res) => {
+// 6. Supprimer un projet
+const deleteProject = async (req, res) => {
     try {
+        const { id } = req.params;
+
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: 'ID du projet invalide'
+            });
+        }
+
         const project = await Project.findOneAndDelete({
-            _id: req.params.id,
+            _id: id,
             owner: req.user.id
         });
 
@@ -133,6 +187,21 @@ exports.deleteProject = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: 'Erreur lors de la suppression du projet',
+            error: error.message
+        });
     }
 };
+
+
+// Exporter les fonctions
+module.exports = {
+    createProject,
+    getMyProjects,
+    getAllProjects,
+    getProjectById,
+    updateProject,
+    deleteProject
+};
+
