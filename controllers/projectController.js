@@ -7,14 +7,24 @@ const createProject = async (req, res) => {
     try {
         const { nom, description, statut } = req.body;
 
-        if (!nom || !nom.trim()) {
+        // نثبتو اللي اسم المشروع موجود
+        if (typeof nom !== 'string' || !nom.trim()) {
             return res.status(400).json({
                 message: 'Le nom du projet est obligatoire'
             });
         }
 
+        // نثبتو اللي statut صحيح
+        const statutsAutorises = ['en cours', 'terminé', 'en pause'];
+
+        if (statut && !statutsAutorises.includes(statut)) {
+            return res.status(400).json({
+                message: 'Statut du projet invalide'
+            });
+        }
+
         const project = await Project.create({
-            nom,
+            nom: nom.trim(),
             description,
             statut,
             owner: req.user.id
@@ -34,15 +44,56 @@ const createProject = async (req, res) => {
 };
 
 
-// 2. Afficher mes projets
+// 2. Afficher mes projets avec recherche et tri
 const getMyProjects = async (req, res) => {
     try {
-        const projects = await Project.find({
-            owner: req.user.id
-        });
+        const { search, statut, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+        // نجيبو كان المشاريع متاع المستخدم الحالي
+        const filter = { owner: req.user.id };
+
+        // نثبتو من statut كان موجود
+        const statutsAutorises = ['en cours', 'terminé', 'en pause'];
+
+        if (statut && !statutsAutorises.includes(statut)) {
+            return res.status(400).json({
+                message: 'Statut du projet invalide'
+            });
+        }
+
+        if (statut) {
+            filter.statut = statut;
+        }
+
+        // نبحثو على المشروع بالاسم
+        if (search && search.trim()) {
+            filter.nom = {
+                $regex: search.trim(),
+                $options: 'i'
+            };
+        }
+
+        // نحددو الحقول المسموح بيها للترتيب
+        const champsTri = ['nom', 'createdAt', 'statut'];
+
+        if (!champsTri.includes(sortBy)) {
+            return res.status(400).json({
+                message: 'Champ de tri invalide'
+            });
+        }
+
+        if (!['asc', 'desc'].includes(order)) {
+            return res.status(400).json({
+                message: 'Ordre de tri invalide'
+            });
+        }
+
+        const projects = await Project.find(filter)
+            .sort({ [sortBy]: order === 'asc' ? 1 : -1 });
 
         res.status(200).json({
             message: 'Mes projets',
+            count: projects.length,
             projects
         });
 
@@ -55,14 +106,55 @@ const getMyProjects = async (req, res) => {
 };
 
 
-// 3. Afficher tous les projets (Manager)
+// 3. Afficher tous les projets avec recherche et tri (Manager)
 const getAllProjects = async (req, res) => {
     try {
-        const projects = await Project.find()
-            .populate('owner', 'nom login');
+        const { search, statut, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+        // نجيبو المشاريع الكل
+        const filter = {};
+
+        const statutsAutorises = ['en cours', 'terminé', 'en pause'];
+
+        if (statut && !statutsAutorises.includes(statut)) {
+            return res.status(400).json({
+                message: 'Statut du projet invalide'
+            });
+        }
+
+        if (statut) {
+            filter.statut = statut;
+        }
+
+        // نبحثو على المشروع بالاسم
+        if (search && search.trim()) {
+            filter.nom = {
+                $regex: search.trim(),
+                $options: 'i'
+            };
+        }
+
+        const champsTri = ['nom', 'createdAt', 'statut'];
+
+        if (!champsTri.includes(sortBy)) {
+            return res.status(400).json({
+                message: 'Champ de tri invalide'
+            });
+        }
+
+        if (!['asc', 'desc'].includes(order)) {
+            return res.status(400).json({
+                message: 'Ordre de tri invalide'
+            });
+        }
+
+        const projects = await Project.find(filter)
+            .populate('owner', 'nom login')
+            .sort({ [sortBy]: order === 'asc' ? 1 : -1 });
 
         res.status(200).json({
             message: 'Liste de tous les projets',
+            count: projects.length,
             projects
         });
 
@@ -73,7 +165,6 @@ const getAllProjects = async (req, res) => {
         });
     }
 };
-
 
 // 4. Afficher un projet par ID
 const getProjectById = async (req, res) => {
