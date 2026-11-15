@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
             password: hashedPassword,
             role: 'user'
         });
-
+// نرجعو معلومات المستخدم بعد ما يتسجل بنجاح
         res.status(201).json({
             message: 'Utilisateur créé avec succès',
             user: {
@@ -94,7 +94,7 @@ exports.login = async (req, res) => {
                 expiresIn: '1d'
             }
         );
-
+// نرجعو Token ومعلومات المستخدم بعد تسجيل الدخول بنجاح
         res.status(200).json({
             message: 'Connexion réussie',
             token,
