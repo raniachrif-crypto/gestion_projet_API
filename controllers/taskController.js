@@ -78,16 +78,21 @@ exports.createTask = async (req, res) => {
 };
 
 
+
 // عرض المهام مع البحث والترتيب
 exports.getTasks = async (req, res) => {
     try {
-        const { search, statut, sortBy, order } = req.query;
+        const {
+            search,
+            statut,
+            sortBy = 'createdAt',
+            order = 'desc'
+        } = req.query;
 
         // نعملو filter حسب Role متاع المستخدم
         let filter = {};
 
         if (req.user.role !== 'manager') {
-
             // نجيبو المشاريع متاع المستخدم الحالي
             const projects = await Project.find({
                 owner: req.user.id
@@ -99,16 +104,24 @@ exports.getTasks = async (req, res) => {
             filter.projet = { $in: projectIds };
         }
 
-        // البحث حسب عنوان المهمة
-        if (search) {
-            filter.titre = {
-                $regex: search,
-                $options: 'i'
-            };
+        // نثبتو من البحث
+        if (search !== undefined) {
+            if (typeof search !== 'string') {
+                return res.status(400).json({
+                    message: 'Terme de recherche invalide'
+                });
+            }
+
+            if (search.trim()) {
+                filter.titre = {
+                    $regex: search.trim(),
+                    $options: 'i'
+                };
+            }
         }
 
-        // التثبت من statut
-        if (statut) {
+        // نثبتو من statut
+        if (statut !== undefined) {
             if (!['todo', 'doing', 'done'].includes(statut)) {
                 return res.status(400).json({
                     message: 'Statut invalide'
@@ -118,24 +131,33 @@ exports.getTasks = async (req, res) => {
             filter.statut = statut;
         }
 
-        // تحديد حقل الترتيب
+        // نحددو حقول الترتيب المسموح بيها
         const allowedSortFields = [
             'createdAt',
             'dateLimite',
             'titre'
         ];
 
-        const field = allowedSortFields.includes(sortBy)
-            ? sortBy
-            : 'createdAt';
+        if (!allowedSortFields.includes(sortBy)) {
+            return res.status(400).json({
+                message: 'Champ de tri invalide'
+            });
+        }
+
+        // نثبتو من اتجاه الترتيب
+        if (!['asc', 'desc'].includes(order)) {
+            return res.status(400).json({
+                message: 'Ordre de tri invalide'
+            });
+        }
 
         const direction = order === 'asc' ? 1 : -1;
 
-        // جلب المهام من قاعدة البيانات
+        // نجيبو المهام من MongoDB
         const tasks = await Task.find(filter)
             .populate('projet', 'nom')
             .populate('assigneA', 'nom login')
-            .sort({ [field]: direction });
+            .sort({ [sortBy]: direction });
 
         res.status(200).json({
             nombre: tasks.length,
@@ -149,6 +171,7 @@ exports.getTasks = async (req, res) => {
         });
     }
 };
+
 
 
 // عرض مهمة حسب ID
@@ -345,12 +368,9 @@ exports.assignTask = async (req, res) => {
             });
         }
 
-        // التثبت من IDs
-        if (!mongoose.isValidObjectId(id) ||
-            !mongoose.isValidObjectId(assigneA)) {
-            return res.status(400).json({
-                message: 'ID invalide'
-            });
+        // نثبتو اللي IDs موجودين وصحيحين
+        if (!assigneA || !mongoose.isValidObjectId(id) ||!mongoose.isValidObjectId(assigneA)) {
+            return res.status(400).json({message: 'ID de la tâche ou de l’utilisateur invalide'});
         }
 
         // نتثبتو اللي المهمة موجودة
