@@ -1,7 +1,7 @@
-
 const express = require('express');
 const router = express.Router();
 
+// نستوردو les fonctions اللي تتحكّم في المشاريع
 const {
     createProject,
     getMyProjects,
@@ -11,28 +11,31 @@ const {
     deleteProject
 } = require('../controllers/projectController');
 
+// نستوردو les middlewares متاع الحماية والصلاحيات
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 
-// Toutes les routes nécessitent une authentification
+// نفرضو على المستخدم يعمل connexion قبل ما يستعمل أي route
 router.use(authMiddleware);
 
-// Créer un projet
+// إنشاء projet جديد
 router.post('/', createProject);
 
-// Voir tous les projets (Manager uniquement)
+// عرض جميع المشاريع، كان الـ Manager ينجم يعملها
 router.get('/all', roleMiddleware('manager'), getAllProjects);
 
-// Voir mes projets
+// عرض المشاريع متاع المستخدم الحالي
 router.get('/', getMyProjects);
 
-// Voir un projet par ID
+// البحث على projet باستعمال الـ ID متاعو
 router.get('/:id', getProjectById);
 
-// Modifier un projet
+// تعديل projet موجود
 router.put('/:id', updateProject);
 
-// Supprimer un projet
+// حذف projet باستعمال الـ ID متاعو
 router.delete('/:id', deleteProject);
 
+// نصدّرو router باش نستعملوه في server.js
 module.exports = router;
+

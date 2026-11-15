@@ -1,8 +1,7 @@
-
 const express = require('express');
 const router = express.Router();
 
-// نستوردو les fonctions متاع gestion des tâches
+// نستوردو les fonctions المسؤولة على gestion des tâches
 const {
     createTask,
     getTasks,
@@ -12,29 +11,30 @@ const {
     assignTask
 } = require('../controllers/taskController');
 
-// نستوردو les middlewares
+// نستوردو les middlewares متاع الحماية والتثبت من الصلاحيات
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 
-// جميع les routes محمية بالـ Token
+// نفرضو على المستخدم يكون عامل connexion وعندو Token صحيح
 router.use(authMiddleware);
 
-// Créer une tâche
+// إنشاء tâche جديدة
 router.post('/', createTask);
 
-// Afficher les tâches
+// عرض قائمة المهام
 router.get('/', getTasks);
 
-// Afficher une tâche par ID
+// البحث على tâche باستعمال الـ ID متاعها
 router.get('/:id', getTaskById);
 
-// Modifier une tâche
+// تعديل tâche موجودة
 router.put('/:id', updateTask);
 
-// Supprimer une tâche
+// حذف tâche
 router.delete('/:id', deleteTask);
 
-// Affecter une tâche (manager uniquement)
+// تعيين tâche لمستخدم، والعملية هاذي مسموحة كان للـ Manager
 router.patch('/:id/assign', roleMiddleware('manager'), assignTask);
 
+// نصدّرو router باش نستعملوه في server.js
 module.exports = router;
