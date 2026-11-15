@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-// نستوردو les fonctions متاع inscription et connexion
+// njibou les fonctions متاع inscription et connexion
 const {
     register,
     login
 } = require('../controllers/authController');
 
-// Route باش المستخدم يعمل inscription (إنشاء compte جديد)
+// Route باش user يعمل inscription (naamlou compte جديد)
 router.post('/register', register);
 
-// Route باش المستخدم يعمل connexion (تسجيل الدخول)
+// Route باش user يعمل connexion 
 router.post('/login', login);
 
-// نصدّرو router باش نستعملوه في server.js
+
 module.exports = router;

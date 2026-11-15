@@ -3,20 +3,20 @@ const Project = require('../models/project');
 const User = require('../models/user');
 const mongoose = require('mongoose');
 
-// 1. إنشاء مهمة جديدة
+// 1. نصنعو مهمة جديدة
 exports.createTask = async (req, res) => {
     try {
-        // ناخذو المعلومات اللي بعثها المستخدم
+        // ناخذو المعلومات اللي بعثها user
         const { titre, description, statut, dateLimite, projet } = req.body;
 
-        // نثبتو اللي العنوان و ID المشروع موجودين
+        // نثبتو اللي العنوان و ID projet موجودين
         if (typeof titre !== 'string' || !titre.trim() || !projet) {
             return res.status(400).json({
                 message: 'Le titre et le projet sont obligatoires'
             });
         }
 
-        // نثبتو من صحة ID المشروع
+        // نثبتو من صحة ID projet
         if (!mongoose.isValidObjectId(projet)) {
             return res.status(400).json({
                 message: 'ID du projet invalide'
@@ -31,7 +31,7 @@ exports.createTask = async (req, res) => {
             });
         }
 
-        // نثبتو من صحة التاريخ كان المستخدم بعثه
+        // نثبتو من صحة التاريخ كان utilisateur بعثه
         if (dateLimite !== undefined &&
             isNaN(Date.parse(dateLimite))) {
             return res.status(400).json({
@@ -39,7 +39,7 @@ exports.createTask = async (req, res) => {
             });
         }
 
-        // نثبتو اللي المشروع موجود في قاعدة البيانات
+        // نثبتو اللي projet موجود في قاعدة البيانات
         const project = await Project.findById(projet);
 
         if (!project) {
@@ -48,14 +48,14 @@ exports.createTask = async (req, res) => {
             });
         }
 
-        // نثبتو اللي المستخدم هو صاحب المشروع
+        // نثبتو اللي user هو صاحب l projet
         if (project.owner.toString() !== req.user.id) {
             return res.status(403).json({
                 message: 'Vous ne pouvez pas ajouter une tâche à ce projet'
             });
         }
 
-        // نصنعو المهمة ونربطوها بالمشروع
+        // نصنعو المهمة ونربطوها ب projet
         const task = await Task.create({
             titre: titre.trim(),
             description,
@@ -64,14 +64,14 @@ exports.createTask = async (req, res) => {
             projet
         });
 
-        // نرجعو المهمة بعد ما تتصنع بنجاح
+        // نرجعو المهمة بعد ما تتصنع 
         res.status(201).json({
             message: 'Tâche créée avec succès',
             task
         });
 
     } catch (error) {
-        // كان تصير مشكلة أثناء إنشاء المهمة
+        // كان تصير مشكلة وقت نعملو المهمة
         res.status(500).json({
             message: 'Erreur lors de la création de la tâche',
             error: error.message
@@ -91,20 +91,20 @@ exports.getTasks = async (req, res) => {
             order = 'desc'
         } = req.query;
 
-        // نعملو filter حسب Role متاع المستخدم
+        // نعملو filter حسب Role متاع utilisateur
         let filter = {};
 
         if (req.user.role !== 'manager') {
 
-            // نجيبو المشاريع اللي يملكهم المستخدم الحالي
+            // نجيبو les projets اللي يملكهم user الحالي
             const projects = await Project.find({
                 owner: req.user.id
             }).select('_id');
 
-            // نستخرجو IDs متاع المشاريع
+            // نستخرجو IDs متاع les projets
             const projectIds = projects.map(project => project._id);
 
-            // المستخدم العادي يشوف كان المهام متاع مشاريعه
+            // user العادي يشوف كان المهام متاع projets mte3o
             filter.projet = { $in: projectIds };
         }
 
@@ -116,7 +116,7 @@ exports.getTasks = async (req, res) => {
                 });
             }
 
-            // نبحثو على المهمة حسب العنوان
+            // نلوجو  على المهمة حسب العنوان
             if (search.trim()) {
                 filter.titre = {
                     $regex: search.trim(),
@@ -137,14 +137,14 @@ exports.getTasks = async (req, res) => {
             filter.statut = statut;
         }
 
-        // نحددو الحقول اللي نسمحو بالترتيب حسبها
+        // نحددو les champs اللي نسمحو بالترتيب حسبها
         const allowedSortFields = [
             'createdAt',
             'dateLimite',
             'titre'
         ];
 
-        // نثبتو من الحقل المطلوب للترتيب
+        // نثبتو من champs المطلوب للترتيب
         if (!allowedSortFields.includes(sortBy)) {
             return res.status(400).json({
                 message: 'Champ de tri invalide'
@@ -161,7 +161,7 @@ exports.getTasks = async (req, res) => {
         // نحددو اتجاه الترتيب: تصاعدي أو تنازلي
         const direction = order === 'asc' ? 1 : -1;
 
-        // نجيبو المهام من MongoDB ونجيبو معاها معلومات المشاريع والمستخدمين
+        // نجيبو المهام من MongoDB ونجيبو معاها معلومات les projets والمستخدمين
         const tasks = await Task.find(filter)
             .populate('projet', 'nom')
             .populate('assigneA', 'nom login')
@@ -174,7 +174,7 @@ exports.getTasks = async (req, res) => {
         });
 
     } catch (error) {
-        // كان تصير مشكلة وقت جلب المهام
+        // كان تصير مشكلة وقت نجيبو  المهام
         res.status(500).json({
             message: 'Erreur lors de la récupération des tâches',
             error: error.message
@@ -206,20 +206,20 @@ exports.getTaskById = async (req, res) => {
             });
         }
 
-        // نثبتو اللي المشروع تابع للمستخدم الحالي
+        // نثبتو اللي projet تابع ll user الحالي
         const project = await Project.findOne({
             _id: task.projet,
             owner: req.user.id
         });
 
-        // كان المستخدم موش صاحب المشروع، نمنعوه من الوصول
+        // كان user موش صاحب projet نمنعوه من الوصول
         if (!project) {
             return res.status(403).json({
                 message: 'Accès interdit à cette tâche'
             });
         }
 
-        // نجيبو اسم المشروع ومعلومات المستخدم المعيّن للمهمة
+        // نجيبو اسم l projet ومعلومات l user المعيّن للمهمة
         await task.populate('projet', 'nom');
         await task.populate('assigneA', 'nom login');
 
@@ -260,20 +260,20 @@ exports.updateTask = async (req, res) => {
             });
         }
 
-        // نثبتو اللي المستخدم هو صاحب المشروع
+        // نثبتو اللي l user هو صاحب l projet
         const project = await Project.findOne({
             _id: task.projet,
             owner: req.user.id
         });
 
-        // كان المشروع موش تابع للمستخدم، نمنعوه من التعديل
+        // كان projet موش تابع ll user نمنعوه من التعديل
         if (!project) {
             return res.status(403).json({
                 message: 'Accès interdit à cette tâche'
             });
         }
 
-        // نثبتو من العنوان كان المستخدم حب يبدلو
+        // نثبتو من العنوان كان utilisateur حب يبدلو
         if (titre !== undefined) {
             if (typeof titre !== 'string' || !titre.trim()) {
                 return res.status(400).json({
@@ -285,7 +285,7 @@ exports.updateTask = async (req, res) => {
             task.titre = titre.trim();
         }
 
-        // نبدلو الوصف كان المستخدم بعث وصف جديد
+        // نبدلو الوصف كان utilisateur بعث وصف جديد
         if (description !== undefined) {
             task.description = description;
         }
@@ -335,7 +335,7 @@ exports.updateTask = async (req, res) => {
 };
 
 
-// 5. حذف مهمة
+// 5. نفسخ مهمة
 exports.deleteTask = async (req, res) => {
     try {
         // ناخذو ID المهمة من الرابط
@@ -358,13 +358,13 @@ exports.deleteTask = async (req, res) => {
             });
         }
 
-        // نثبتو اللي المستخدم هو صاحب المشروع
+        // نثبتو اللي user هو صاحب lprojet
         const project = await Project.findOne({
             _id: task.projet,
             owner: req.user.id
         });
 
-        // كان المشروع موش تابع للمستخدم، نمنعوه من الحذف
+        // كان l projet موش تابع ll user نمنعوه من الحذف
         if (!project) {
             return res.status(403).json({
                 message: 'Accès interdit à cette tâche'
@@ -374,7 +374,7 @@ exports.deleteTask = async (req, res) => {
         // نحذفو المهمة من قاعدة البيانات
         await Task.findByIdAndDelete(id);
 
-        // نعلمو المستخدم اللي الحذف تم بنجاح
+        // نعلمو user اللي الحذف تم بنجاح
         res.status(200).json({
             message: 'Tâche supprimée avec succès'
         });
@@ -389,14 +389,14 @@ exports.deleteTask = async (req, res) => {
 };
 
 
-// 6. إسناد مهمة لمستخدم (Manager فقط)
+// 6. إسناد مهمة لمستخدم (manager برك)
 exports.assignTask = async (req, res) => {
     try {
-        // ناخذو ID المهمة و ID المستخدم اللي باش نسندولو المهمة
+        // ناخذو ID المهمة و ID user اللي باش نسندولو المهمة
         const { id } = req.params;
         const { assigneA } = req.body;
 
-        // نثبتو اللي المستخدم الحالي عندو Role Manager
+        // نثبتو اللي l user الحالي عندو role manager
         if (req.user.role !== 'manager') {
             return res.status(403).json({
                 message: 'Seul le manager peut assigner une tâche'
@@ -420,7 +420,7 @@ exports.assignTask = async (req, res) => {
             });
         }
 
-        // نثبتو اللي المستخدم اللي باش نسندولو المهمة موجود
+        // نثبتو اللي user اللي باش نسندولو المهمة موجود
         const user = await User.findById(assigneA);
 
         if (!user) {
@@ -429,7 +429,7 @@ exports.assignTask = async (req, res) => {
             });
         }
 
-        // نسندو المهمة للمستخدم المختار
+        // نسندو المهمة ll user لي خترناه
         task.assigneA = assigneA;
 
         // نسجلو التغيير في قاعدة البيانات

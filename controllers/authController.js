@@ -7,14 +7,14 @@ exports.register = async (req, res) => {
     try {
         const { nom, login, password } = req.body;
 
-        // نتثبتو اللي المعلومات الكل موجودة
+        // نثبتو الي المعلومات الكل موجودة
         if (!nom || !login || !password) {
             return res.status(400).json({
                 message: 'Tous les champs sont obligatoires'
             });
         }
 
-        // نتثبتو اللي ال login موش موجود قبل
+        // نثبتو الي login موش موجود قبل
         const userExiste = await User.findOne({ login });
 
         if (userExiste) {
@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
             });
         }
 
-        // نعملو تشفير لل mot de passe
+        // نعملو تشفير لل mot de passe 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // نصنعو utilisateur جديد
@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
             password: hashedPassword,
             role: 'user'
         });
-// نرجعو معلومات المستخدم بعد ما يتسجل بنجاح
+// نرجعو معلومات utilisateur بعد ما يتسجل 
         res.status(201).json({
             message: 'Utilisateur créé avec succès',
             user: {
@@ -55,7 +55,7 @@ exports.login = async (req, res) => {
     try {
         const { login, password } = req.body;
 
-        // نتثبتو من المعلومات
+        // نثبتو من المعلومات
         if (!login || !password) {
             return res.status(400).json({
                 message: 'Login et mot de passe obligatoires'
@@ -71,7 +71,7 @@ exports.login = async (req, res) => {
             });
         }
 
-        // نقارنو mot de passe مع النسخة المشفرة
+        // نقارنو mot de passe مع النسخة crypté
         const passwordCorrect = await bcrypt.compare(
             password,
             user.password
@@ -94,7 +94,7 @@ exports.login = async (req, res) => {
                 expiresIn: '1d'
             }
         );
-// نرجعو Token ومعلومات المستخدم بعد تسجيل الدخول بنجاح
+// نرجعو token ومعلوماته بعد تسجيل الدخول بنجاح
         res.status(200).json({
             message: 'Connexion réussie',
             token,

@@ -1,22 +1,22 @@
 const mongoose = require('mongoose');
 
-// Fonction باش نربطو التطبيق بقاعدة البيانات MongoDB
+// Fonction باش نربطو app ب db MongoDB
 const connectDB = async () => {
     try {
-        // نعملو connexion باستعمال الرابط الموجود في fichier .env
+        // نعملو connexion   
         await mongoose.connect(process.env.MONGO_URI);
 
-        // نطبعو message في console كي تنجح connexion
+        // نطبعو msg في console كي تنجح connexion
         console.log('MongoDB connecté avec succès !');
 
     } catch (error) {
-        // كان تصير مشكلة في connexion، نطبعو سبب الخطأ
+        // كان تصير مشكلة في cnx نشوفو سبب l erreur
         console.error('Erreur MongoDB :', error.message);
 
-        // نوقفو التطبيق خاطر ما ينجمش يخدم من غير قاعدة البيانات
+        // نوقفو app خاطر ما ينجمش يخدم من غير  db
         process.exit(1);
     }
 };
 
-// نصدّرو fonction باش نستعملوها في server.js
+//  fonction باش نستعملوها في server.js
 module.exports = connectDB;

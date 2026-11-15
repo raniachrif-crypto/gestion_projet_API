@@ -2,13 +2,13 @@
 const mongoose = require('mongoose');
 const Project = require('../models/project');
 
-// 1. إنشاء مشروع جديد
+// 1. نصنعو projet جديد
 const createProject = async (req, res) => {
     try {
-        // ناخذو المعلومات اللي بعثها المستخدم
+        // ناخذو المعلومات اللي بعثها utilisateur
         const { nom, description, statut } = req.body;
 
-        // نثبتو اللي اسم المشروع موجود وموش فارغ
+        // نثبتو اللي اسم projet موجود وموش فارغ
         if (typeof nom !== 'string' || !nom.trim()) {
             return res.status(400).json({
                 message: 'Le nom du projet est obligatoire'
@@ -25,7 +25,7 @@ const createProject = async (req, res) => {
             });
         }
 
-        // نصنعو مشروع جديد ونربطوه بالمستخدم الحالي
+        // نصنعو مشروع جديد ونربطوه ب utilisateur 
         const project = await Project.create({
             nom: nom.trim(),
             description,
@@ -33,14 +33,14 @@ const createProject = async (req, res) => {
             owner: req.user.id
         });
 
-        // نرجعو المشروع بعد ما يتصنع بنجاح
+        // نرجعو المشروع بعد ما يتصنع 
         res.status(201).json({
             message: 'Projet créé avec succès',
             project
         });
 
     } catch (error) {
-        // كان تصير مشكلة أثناء إنشاء المشروع
+        // كان تصير مشكلة وقت نعملو projet
         res.status(500).json({
             message: 'Erreur lors de la création du projet',
             error: error.message
@@ -49,13 +49,13 @@ const createProject = async (req, res) => {
 };
 
 
-// 2. عرض المشاريع متاع المستخدم الحالي مع البحث والترتيب
+// 2. عرض les projets متاع utilisateur الحالي مع البحث والترتيب
 const getMyProjects = async (req, res) => {
     try {
         // ناخذو كلمات البحث والفلترة والترتيب من URL
         const { search, statut, sortBy = 'createdAt', order = 'desc' } = req.query;
 
-        // نجيبو كان المشاريع اللي يملكهم المستخدم الحالي
+        // نجيبو كان les projets اللي يملكهم المستخدم الحالي
         const filter = { owner: req.user.id };
 
         // نحددو الحالات المسموح بيها
@@ -73,7 +73,7 @@ const getMyProjects = async (req, res) => {
             filter.statut = statut;
         }
 
-        // نبحثو على المشروع حسب الاسم
+        // نلوجو على المشروع حسب الاسم
         if (search && search.trim()) {
             filter.nom = {
                 $regex: search.trim(),
@@ -81,10 +81,10 @@ const getMyProjects = async (req, res) => {
             };
         }
 
-        // نحددو الحقول اللي نسمحو بالترتيب حسبها
+        // نحددو les champs اللي يصيرالترتيب حسبها
         const champsTri = ['nom', 'createdAt', 'statut'];
 
-        // نثبتو اللي الحقل المطلوب موجود في القائمة
+        // نثبتو اللي champs المطلوب موجود في القائمة
         if (!champsTri.includes(sortBy)) {
             return res.status(400).json({
                 message: 'Champ de tri invalide'
@@ -98,11 +98,11 @@ const getMyProjects = async (req, res) => {
             });
         }
 
-        // نجيبو المشاريع ونرتبوهم حسب الاختيار
+        // نجيبو les projets ونرتبوهم حسب الاختيار
         const projects = await Project.find(filter)
             .sort({ [sortBy]: order === 'asc' ? 1 : -1 });
 
-        // نرجعو قائمة المشاريع وعددهم
+        // نرجعو قائمة les projets وعددهم
         res.status(200).json({
             message: 'Mes projets',
             count: projects.length,
@@ -110,7 +110,7 @@ const getMyProjects = async (req, res) => {
         });
 
     } catch (error) {
-        // كان تصير مشكلة وقت جلب المشاريع
+        // كان تصير مشكلة وقت نجيبو les projets
         res.status(500).json({
             message: 'Erreur lors de la récupération des projets',
             error: error.message
@@ -119,13 +119,13 @@ const getMyProjects = async (req, res) => {
 };
 
 
-// 3. عرض المشاريع الكل (خاص بالـ Manager) مع البحث والترتيب
+// 3. عرض les projets الكل (manager) مع البحث والترتيب
 const getAllProjects = async (req, res) => {
     try {
         // ناخذو خيارات البحث والفلترة والترتيب
         const { search, statut, sortBy = 'createdAt', order = 'desc' } = req.query;
 
-        // هنا ما نحطوش owner خاطر الـ Manager يشوف المشاريع الكل
+        // هنا ما نحطوش owner خاطر الـ Manager يشوف les projets الكل
         const filter = {};
 
         // نحددو الحالات المسموح بيها
@@ -143,7 +143,7 @@ const getAllProjects = async (req, res) => {
             filter.statut = statut;
         }
 
-        // نبحثو على المشروع حسب الاسم
+        // نبحثو على projet حسب الاسم
         if (search && search.trim()) {
             filter.nom = {
                 $regex: search.trim(),
@@ -151,10 +151,10 @@ const getAllProjects = async (req, res) => {
             };
         }
 
-        // نحددو الحقول المسموح بيها للترتيب
+        // نحددو les champs المسموح بيها للترتيب
         const champsTri = ['nom', 'createdAt', 'statut'];
 
-        // نثبتو من الحقل المطلوب
+        // نثبتو من champs المطلوب
         if (!champsTri.includes(sortBy)) {
             return res.status(400).json({
                 message: 'Champ de tri invalide'
@@ -168,12 +168,12 @@ const getAllProjects = async (req, res) => {
             });
         }
 
-        // نجيبو المشاريع الكل ونجيبو معاهم معلومات أصحابهم
+        // نجيبو les projets الكل ونجيبو معاهم معلومات أصحابهم
         const projects = await Project.find(filter)
             .populate('owner', 'nom login')
             .sort({ [sortBy]: order === 'asc' ? 1 : -1 });
 
-        // نرجعو قائمة المشاريع الكل
+        // نرجعو قائمة les projets الكل
         res.status(200).json({
             message: 'Liste de tous les projets',
             count: projects.length,
@@ -181,7 +181,7 @@ const getAllProjects = async (req, res) => {
         });
 
     } catch (error) {
-        // كان تصير مشكلة وقت جلب المشاريع
+        // كان تصير مشكلة وقت نجيبو les projets
         res.status(500).json({
             message: 'Erreur lors de la récupération des projets',
             error: error.message
@@ -190,10 +190,10 @@ const getAllProjects = async (req, res) => {
 };
 
 
-// 4. عرض مشروع معيّن باستعمال الـ ID
+// 4. عرض projet معيّن باستعمال الـ ID
 const getProjectById = async (req, res) => {
     try {
-        // ناخذو ID المشروع من الرابط
+        // ناخذو ID projet من الرابط
         const { id } = req.params;
 
         // نثبتو اللي الـ ID عندو صيغة صحيحة
@@ -203,24 +203,24 @@ const getProjectById = async (req, res) => {
             });
         }
 
-        // نلقاو المشروع حسب الـ ID وصاحب المشروع
+        // نلقاو projet حسب الـ ID وصاحب projet
         const project = await Project.findOne({
             _id: id,
             owner: req.user.id
         });
 
-        // كان المشروع موش موجود أو موش تابع للمستخدم
+        // كان projet موش موجود أو موش تابع utilisateur 
         if (!project) {
             return res.status(404).json({
                 message: 'Projet introuvable'
             });
         }
 
-        // نرجعو معلومات المشروع
+        // نرجعو معلومات projet
         res.status(200).json({ project });
 
     } catch (error) {
-        // كان تصير مشكلة وقت جلب المشروع
+        // كان تصير مشكلة وقت نجيبو projet
         res.status(500).json({
             message: 'Erreur lors de la récupération du projet',
             error: error.message
@@ -229,10 +229,10 @@ const getProjectById = async (req, res) => {
 };
 
 
-// 5. تعديل مشروع
+// 5. تعديل projet
 const updateProject = async (req, res) => {
     try {
-        // ناخذو ID المشروع من الرابط
+        // ناخذو ID projet من الرابط
         const { id } = req.params;
 
         // نثبتو من صحة الـ ID
@@ -245,20 +245,20 @@ const updateProject = async (req, res) => {
         // ناخذو المعلومات الجديدة
         const { nom, description, statut } = req.body;
 
-        // نلقاو المشروع اللي يملكه المستخدم الحالي
+        // نلقاو projet اللي يملكه utilisateur الحالي
         const project = await Project.findOne({
             _id: id,
             owner: req.user.id
         });
 
-        // كان المشروع موش موجود أو موش تابع للمستخدم
+        // كان projet موش موجود أو موش تابع utilisateur 
         if (!project) {
             return res.status(404).json({
                 message: 'Projet introuvable'
             });
         }
 
-        // نثبتو من الاسم كان المستخدم حب يبدلو
+        // نثبتو من الاسم كان utilisateur حب يبدلو
         if (nom !== undefined) {
             if (typeof nom !== 'string' || !nom.trim()) {
                 return res.status(400).json({
@@ -270,7 +270,7 @@ const updateProject = async (req, res) => {
             project.nom = nom.trim();
         }
 
-        // نبدلو الوصف كان المستخدم بعث وصف جديد
+        // نبدلو الوصف كان user بعث وصف جديد
         if (description !== undefined) {
             project.description = description;
         }
@@ -292,7 +292,7 @@ const updateProject = async (req, res) => {
         // نسجلو التغييرات في قاعدة البيانات
         await project.save();
 
-        // نرجعو المشروع بعد التعديل
+        // نرجعو projrt بعد التعديل
         res.status(200).json({
             message: 'Projet modifié avec succès',
             project
@@ -308,10 +308,10 @@ const updateProject = async (req, res) => {
 };
 
 
-// 6. حذف مشروع
+// 6. حذف projet
 const deleteProject = async (req, res) => {
     try {
-        // ناخذو ID المشروع من الرابط
+        // ناخذو ID projet من الرابط
         const { id } = req.params;
 
         // نثبتو من صحة الـ ID
@@ -321,20 +321,20 @@ const deleteProject = async (req, res) => {
             });
         }
 
-        // نحذفو المشروع كان تابع للمستخدم الحالي
+        // نفسخو projet كان تابع l user الحالي
         const project = await Project.findOneAndDelete({
             _id: id,
             owner: req.user.id
         });
 
-        // كان المشروع موش موجود أو موش تابع للمستخدم
+        // كان projet موش موجود أو موش تابع utilisateur 
         if (!project) {
             return res.status(404).json({
                 message: 'Projet introuvable'
             });
         }
 
-        // نعلمو المستخدم اللي الحذف تم بنجاح
+        // نعلمو user اللي الحذف تم بنجاح
         res.status(200).json({
             message: 'Projet supprimé avec succès'
         });

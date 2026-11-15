@@ -1,10 +1,10 @@
 
 const jwt = require('jsonwebtoken');
 
-// نثبتو اللي المستخدم عامل connexion وعندو Token صحيح
+// نثبتو اللي user عامل connexion وعندو Token صحيح
 const authMiddleware = (req, res, next) => {
     try {
-        // ناخذو Token من Header
+        // ناخذو token من header
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -13,16 +13,14 @@ const authMiddleware = (req, res, next) => {
             });
         }
 
-        // نقصّو Bearer ونخليو Token وحدو
+        // نقصو bearer ونخليو token وحدو
         const token = authHeader.split(' ')[1];
 
-        // نثبتو من صحة Token
+        // نثبتو من  token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // نخزنو معلومات المستخدم في req.user
+        // نخزنو معلومات user  في req.user
         req.user = decoded;
-
-        // نكملو للمرحلة الموالية
         next();
 
     } catch (error) {
